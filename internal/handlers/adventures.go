@@ -310,6 +310,21 @@ func (h *Handlers) Done(w http.ResponseWriter, r *http.Request) {
 			}
 			state.StepSummaries[adventure.CurrentStep] = summary
 		}
+
+		// For the map step, extract structured location data with connections.
+		if adventure.CurrentStep == "map" {
+			extractMessages := buildChatMessages(adventure.CurrentStep, state, dbMessages)
+			extractMessages = append(extractMessages, ollama.Message{
+				Role:    "user",
+				Content: tables.ExtractLocationsPrompt(),
+			})
+			locJSON, err := h.ollama.Chat(r.Context(), extractMessages)
+			if err != nil {
+				log.Printf("extract locations for %d: %v", id, err)
+			} else if locs := parseLocations(locJSON); len(locs) > 0 {
+				state.MapLocations = locs
+			}
+		}
 	}
 
 	// Advance to next step and save updated state.
@@ -773,6 +788,39 @@ func buildUserMessage(step, selection, guidance, context string) string {
 	}
 
 	return msg
+}
+
+// extractJSON strips markdown fences and returns the innermost JSON array from s.
+func extractJSON(s string) string {
+	s = strings.TrimSpace(s)
+	if i := strings.Index(s, "```json"); i >= 0 {
+		s = s[i+7:]
+		if j := strings.Index(s, "```"); j >= 0 {
+			s = s[:j]
+		}
+	} else if i := strings.Index(s, "```"); i >= 0 {
+		s = s[i+3:]
+		if j := strings.Index(s, "```"); j >= 0 {
+			s = s[:j]
+		}
+	}
+	start := strings.Index(s, "[")
+	end := strings.LastIndex(s, "]")
+	if start >= 0 && end > start {
+		s = s[start : end+1]
+	}
+	return strings.TrimSpace(s)
+}
+
+// parseLocations parses a JSON array of locations from an LLM response.
+func parseLocations(raw string) []db.Location {
+	raw = extractJSON(raw)
+	var locations []db.Location
+	if err := json.Unmarshal([]byte(raw), &locations); err != nil {
+		log.Printf("parse locations JSON: %v (%.200s)", err, raw)
+		return nil
+	}
+	return locations
 }
 
 // buildStateContext creates a context summary from adventure state for LLM prompts.

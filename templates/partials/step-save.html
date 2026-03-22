@@ -1,0 +1,50 @@
+{{define "step-save"}}
+<div class="step-panel" id="step-panel-inner">
+    <div class="step-header">
+        <h2>Step 6: Someone to Save</h2>
+        <p class="step-description">Generate the NPCs. Use the character matrix to create meaningful relationships.</p>
+    </div>
+
+    <div class="step-content">
+        <div class="npc-matrix">
+            <h3>NPC Types</h3>
+            <table class="table-npc">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Power</th>
+                        <th>Helpfulness</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Tables.NPCTypes}}
+                    <tr>
+                        <td class="npc-name">{{.Name}}</td>
+                        <td class="npc-power power-{{.Power}}">{{.Power}}</td>
+                        <td class="npc-help help-{{.Helpfulness}}">{{.Helpfulness}}</td>
+                        <td class="npc-desc">{{.Description}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        {{if .State.Save}}
+        <div class="generated-content">
+            <h3>NPCs</h3>
+            <div class="content-text">{{safe .State.Save}}</div>
+        </div>
+        {{end}}
+    </div>
+
+    <div class="step-actions">
+        <form hx-post="/adventures/{{.Adventure.ID}}/next"
+              hx-target="#step-panel"
+              hx-swap="innerHTML"
+              hx-indicator="#htmx-indicator">
+            <button type="submit" class="btn btn-primary">Next: Map &rarr;</button>
+        </form>
+    </div>
+</div>
+{{end}}

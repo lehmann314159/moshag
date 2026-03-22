@@ -1,0 +1,35 @@
+{{define "step-solve"}}
+<div class="step-panel" id="step-panel-inner">
+    <div class="step-header">
+        <h2>Step 5: Something to Solve</h2>
+        <p class="step-description">Build the mystery. Questions, Puzzles, and Answers form the backbone of investigation.</p>
+    </div>
+
+    <div class="step-content">
+        <div class="content-note">
+            <p>Work with the Warden's assistant to create a mystery structure:</p>
+            <ul>
+                <li><strong>The central question</strong> — What is the core mystery?</li>
+                <li><strong>Clues and puzzles</strong> — How do players investigate?</li>
+                <li><strong>The answer</strong> — What is the truth?</li>
+            </ul>
+        </div>
+
+        {{if .State.Solve}}
+        <div class="generated-content">
+            <h3>Mystery Structure</h3>
+            <div class="content-text">{{safe .State.Solve}}</div>
+        </div>
+        {{end}}
+    </div>
+
+    <div class="step-actions">
+        <form hx-post="/adventures/{{.Adventure.ID}}/next"
+              hx-target="#step-panel"
+              hx-swap="innerHTML"
+              hx-indicator="#htmx-indicator">
+            <button type="submit" class="btn btn-primary">Next: Save &rarr;</button>
+        </form>
+    </div>
+</div>
+{{end}}

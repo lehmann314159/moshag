@@ -27,6 +27,13 @@ type Message struct {
 	CreatedAt   time.Time
 }
 
+// Location represents a single map location with connections to other locations.
+type Location struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Connects    []string `json:"connects"`
+}
+
 // AdventureState is parsed from StateJSON and holds the structured state of an adventure.
 type AdventureState struct {
 	Scenario              string   `json:"scenario,omitempty"`
@@ -45,7 +52,7 @@ type AdventureState struct {
 	Survive               string   `json:"survive,omitempty"`
 	Solve                 string   `json:"solve,omitempty"`
 	Save                  string   `json:"save,omitempty"`
-	MapLocations          []string          `json:"map_locations,omitempty"`
+	MapLocations          []Location        `json:"map_locations,omitempty"`
 	Theme                 string            `json:"theme,omitempty"`
 	FinalDoc              string            `json:"final_doc,omitempty"`
 	StepSummaries         map[string]string `json:"step_summaries,omitempty"`

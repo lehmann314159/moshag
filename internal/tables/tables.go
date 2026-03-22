@@ -439,7 +439,7 @@ func SystemPrompt(step string) string {
 
 		"save": base + contextNote + ` This step creates the NPCs. Use the character matrix: Gatekeeper (powerful/unhelpful), Employer, Benefactor, Traitor, Survivor, Expert, Coward, Victim, Drinking Buddy, Wildcard. Each NPC needs a name, role in the matrix, one defining physical or behavioral trait, and one concrete want that puts them in conflict or alignment with the crew. Root them in the established setting and scenario.`,
 
-		"map": base + contextNote + ` This step maps the adventure location as 10 numbered boxes in a rough flowchart. Use the established setting, Horror, survival threat, mystery, and NPCs as your raw material — every significant element from prior steps should have a physical home on the map. Box 1 is the crew's entry point. The Horror's lair must appear. Place the survival threat in specific locations (e.g., if the threat is environmental, which areas are affected?). Give NPCs starting locations. Include at least one locked or secret area tied to the mystery's clues. Include a defensible safe zone. Each box gets a short name and 1-2 sentences grounded in the specific details already established — not generic sci-fi rooms. Do not invent new lore; express what has already been decided spatially.`,
+		"map": base + contextNote + ` This step maps the adventure location as 10 numbered boxes in a rough flowchart. Use the established setting, Horror, survival threat, mystery, and NPCs as your raw material — every significant element from prior steps should have a physical home on the map. Box 1 is the crew's entry point. The Horror's lair must appear. Place the survival threat in specific locations (e.g., if the threat is environmental, which areas are affected?). Give NPCs starting locations. Include at least one locked or secret area tied to the mystery's clues. Include a defensible safe zone. Each box gets a short name and 1-2 sentences grounded in the specific details already established — not generic sci-fi rooms. Do not invent new lore; express what has already been decided spatially. For each location, explicitly state which other locations it connects to directly — a crew member can move between connected locations without passing through any other. Connections must be bidirectional. A typical location connects to 1-3 others; avoid both dead ends and locations that connect to everything.`,
 
 		"final": base + contextNote + ` Generate the complete adventure document using everything established across all steps. Sections: Session Title, Scenario, Setting, The Horror (TOMBS elements woven into narrative), Something to Survive, Something to Solve, Someone to Save (full NPC details), The Map (all 10 locations). Terse and evocative throughout — this is a Warden's reference, not a novel.`,
 	}
@@ -447,4 +447,14 @@ func SystemPrompt(step string) string {
 		return p
 	}
 	return "You are a collaborative Warden's assistant for the Mothership RPG. Help the user develop their adventure."
+}
+
+// ExtractLocationsPrompt returns a prompt that asks the AI to output the map locations as clean JSON.
+func ExtractLocationsPrompt() string {
+	return `Based on our conversation, output a JSON array of all the map locations we've defined. Use exactly this format with no other text, explanation, or markdown fences:
+[
+  {"name": "Location Name", "description": "1-2 sentence description.", "connects": ["Connected Location Name", "Another Location"]},
+  ...
+]
+List connections by location name (not number). Every connection must be bidirectional — if A connects to B, B must list A. Include all locations we defined.`
 }

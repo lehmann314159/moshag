@@ -1,0 +1,182 @@
+{{define "step-tombs"}}
+<div class="step-panel tombs-panel" id="step-panel-inner">
+    <div class="step-header">
+        <h2>Step 3: The Horror (TOMBS)</h2>
+        <p class="step-description">Roll the TOMBS cycle to generate your Horror: Transgression, Omens, Manifestation, Banishment, Slumber.</p>
+    </div>
+
+    <div class="tombs-actions">
+        <button class="btn btn-roll btn-roll-all"
+                hx-post="/adventures/{{.Adventure.ID}}/roll"
+                hx-vals='{"table": "all-tombs"}'
+                hx-target="#step-panel-inner"
+                hx-swap="outerHTML"
+                hx-indicator="#htmx-indicator">
+            Roll All TOMBS
+        </button>
+    </div>
+
+    <div class="tombs-tables">
+        <!-- Transgression -->
+        <div class="tombs-col">
+            <div class="tombs-col-header">
+                <span class="tombs-letter">T</span>
+                <span>Transgression</span>
+                <button class="btn btn-roll btn-sm"
+                        hx-post="/adventures/{{.Adventure.ID}}/roll"
+                        hx-vals='{"table": "transgression"}'
+                        hx-target="#step-panel-inner"
+                        hx-swap="outerHTML"
+                        hx-indicator="#htmx-indicator">
+                    D100
+                </button>
+            </div>
+            {{if .State.Transgression}}
+            <div class="tombs-result selected">{{.State.Transgression}}</div>
+            {{end}}
+            <table class="table-d100 table-compact">
+                <tbody>
+                {{range .Tables.Transgressions}}
+                <tr class="table-entry {{if eq .Text $.State.Transgression}}selected{{end}}">
+                    <td class="roll-cell">{{.Min}}{{if ne .Min .Max}}-{{.Max}}{{end}}</td>
+                    <td>{{.Text}}</td>
+                </tr>
+                {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Omens -->
+        <div class="tombs-col">
+            <div class="tombs-col-header">
+                <span class="tombs-letter">O</span>
+                <span>Omens</span>
+                <button class="btn btn-roll btn-sm"
+                        hx-post="/adventures/{{.Adventure.ID}}/roll"
+                        hx-vals='{"table": "omens"}'
+                        hx-target="#step-panel-inner"
+                        hx-swap="outerHTML"
+                        hx-indicator="#htmx-indicator">
+                    D100
+                </button>
+            </div>
+            {{if .State.Omens}}
+            <div class="tombs-result selected">{{.State.Omens}}</div>
+            {{end}}
+            <table class="table-d100 table-compact">
+                <tbody>
+                {{range .Tables.Omens}}
+                <tr class="table-entry {{if eq .Text $.State.Omens}}selected{{end}}">
+                    <td class="roll-cell">{{.Min}}{{if ne .Min .Max}}-{{.Max}}{{end}}</td>
+                    <td>{{.Text}}</td>
+                </tr>
+                {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Manifestation -->
+        <div class="tombs-col">
+            <div class="tombs-col-header">
+                <span class="tombs-letter">M</span>
+                <span>Manifestation</span>
+                <button class="btn btn-roll btn-sm"
+                        hx-post="/adventures/{{.Adventure.ID}}/roll"
+                        hx-vals='{"table": "manifestation"}'
+                        hx-target="#step-panel-inner"
+                        hx-swap="outerHTML"
+                        hx-indicator="#htmx-indicator">
+                    D100
+                </button>
+            </div>
+            {{if .State.Manifestation}}
+            <div class="tombs-result selected">{{.State.Manifestation}}</div>
+            {{end}}
+            <table class="table-d100 table-compact">
+                <tbody>
+                {{range .Tables.Manifestations}}
+                <tr class="table-entry {{if eq .Text $.State.Manifestation}}selected{{end}}">
+                    <td class="roll-cell">{{.Min}}{{if ne .Min .Max}}-{{.Max}}{{end}}</td>
+                    <td>{{.Text}}</td>
+                </tr>
+                {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Banishment -->
+        <div class="tombs-col">
+            <div class="tombs-col-header">
+                <span class="tombs-letter">B</span>
+                <span>Banishment</span>
+                <button class="btn btn-roll btn-sm"
+                        hx-post="/adventures/{{.Adventure.ID}}/roll"
+                        hx-vals='{"table": "banishment"}'
+                        hx-target="#step-panel-inner"
+                        hx-swap="outerHTML"
+                        hx-indicator="#htmx-indicator">
+                    D100
+                </button>
+            </div>
+            {{if .State.Banishment}}
+            <div class="tombs-result selected">{{.State.Banishment}}</div>
+            {{end}}
+            <table class="table-d100 table-compact">
+                <tbody>
+                {{range .Tables.Banishments}}
+                <tr class="table-entry {{if eq .Text $.State.Banishment}}selected{{end}}">
+                    <td class="roll-cell">{{.Min}}{{if ne .Min .Max}}-{{.Max}}{{end}}</td>
+                    <td>{{.Text}}</td>
+                </tr>
+                {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Slumber -->
+        <div class="tombs-col">
+            <div class="tombs-col-header">
+                <span class="tombs-letter">S</span>
+                <span>Slumber</span>
+                <button class="btn btn-roll btn-sm"
+                        hx-post="/adventures/{{.Adventure.ID}}/roll"
+                        hx-vals='{"table": "slumber"}'
+                        hx-target="#step-panel-inner"
+                        hx-swap="outerHTML"
+                        hx-indicator="#htmx-indicator">
+                    D100
+                </button>
+            </div>
+            {{if .State.Slumber}}
+            <div class="tombs-result selected">{{.State.Slumber}}</div>
+            {{end}}
+            <table class="table-d100 table-compact">
+                <tbody>
+                {{range .Tables.Slumbers}}
+                <tr class="table-entry {{if eq .Text $.State.Slumber}}selected{{end}}">
+                    <td class="roll-cell">{{.Min}}{{if ne .Min .Max}}-{{.Max}}{{end}}</td>
+                    <td>{{.Text}}</td>
+                </tr>
+                {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{if .State.HorrorSummary}}
+    <div class="horror-summary">
+        <h3>The Horror</h3>
+        <div class="horror-text">{{safe .State.HorrorSummary}}</div>
+    </div>
+    {{end}}
+
+    <div class="step-actions">
+        <form hx-post="/adventures/{{.Adventure.ID}}/next"
+              hx-target="#step-panel"
+              hx-swap="innerHTML"
+              hx-indicator="#htmx-indicator">
+            <button type="submit" class="btn btn-primary">Next: Survive &rarr;</button>
+        </form>
+    </div>
+</div>
+{{end}}

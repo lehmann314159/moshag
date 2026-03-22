@@ -15,6 +15,17 @@
         {{end}}
     </div>
     {{end}}
+    {{if .State.MapLocations}}
+    <div class="step-context">
+        <span class="step-context-label">Map — {{len .State.MapLocations}} locations</span>
+        {{range .State.MapLocations}}
+        <div class="step-context-entry map-location-entry">
+            <span class="step-context-step">{{.Name}}</span>
+            <span class="step-context-summary">{{.Description}}{{if .Connects}} <span class="location-connects">→ {{join .Connects ", "}}</span>{{end}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
     <form class="step-form"
           hx-post="/adventures/{{.Adventure.ID}}/start"
           hx-target="#main-panel"

@@ -1,0 +1,40 @@
+{{define "step-map"}}
+<div class="step-panel" id="step-panel-inner">
+    <div class="step-header">
+        <h2>Step 7: The Map</h2>
+        <p class="step-description">Generate 10 locations connected by meaningful paths. Start with the crew's entry point.</p>
+    </div>
+
+    <div class="step-content">
+        <div class="content-note">
+            <p>Work with the assistant to create your map locations. Each location should have:</p>
+            <ul>
+                <li>A name and brief description</li>
+                <li>One notable feature or danger</li>
+                <li>Connections to other locations</li>
+            </ul>
+            <p>Include: entry point, Horror's lair, safe area, danger zone, locked/secret areas.</p>
+        </div>
+
+        {{if .State.MapLocations}}
+        <div class="map-locations">
+            <h3>Locations</h3>
+            <ol class="location-list">
+                {{range .State.MapLocations}}
+                <li class="location-item">{{.}}</li>
+                {{end}}
+            </ol>
+        </div>
+        {{end}}
+    </div>
+
+    <div class="step-actions">
+        <form hx-post="/adventures/{{.Adventure.ID}}/next"
+              hx-target="#step-panel"
+              hx-swap="innerHTML"
+              hx-indicator="#htmx-indicator">
+            <button type="submit" class="btn btn-primary">Next: Final Document &rarr;</button>
+        </form>
+    </div>
+</div>
+{{end}}

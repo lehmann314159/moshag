@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -103,6 +104,17 @@ func (s *Server) parseTemplates() {
 				m[fmt.Sprintf("%v", args[i])] = args[i+1]
 			}
 			return m
+		},
+		"join": strings.Join,
+		"len": func(v any) int {
+			switch s := v.(type) {
+			case []string:
+				return len(s)
+			case []db.Location:
+				return len(s)
+			default:
+				return 0
+			}
 		},
 		"stepIsComplete": func(steps []string, current, check string) bool {
 			currentIdx := -1

@@ -1119,6 +1119,13 @@ a:hover { color: var(--text-bright); text-decoration: underline; }
     white-space: pre-wrap;
 }
 
+.location-connects {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-left: 0.25rem;
+}
+
 .message-role {
     font-family: var(--font-mono);
     font-size: 0.65rem;

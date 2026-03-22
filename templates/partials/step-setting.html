@@ -1,0 +1,50 @@
+{{define "step-setting"}}
+<div class="step-panel" id="step-panel-inner">
+    <div class="step-header">
+        <h2>Step 2: Setting</h2>
+        <p class="step-description">Roll a D10 to determine where this adventure takes place.</p>
+    </div>
+
+    <div class="table-section">
+        <div class="table-actions">
+            <button class="btn btn-roll"
+                    hx-post="/adventures/{{.Adventure.ID}}/roll"
+                    hx-vals='{"table": "setting"}'
+                    hx-target="#step-panel-inner"
+                    hx-swap="outerHTML"
+                    hx-indicator="#htmx-indicator">
+                Roll D10
+            </button>
+        </div>
+
+        <table class="table-d10">
+            <thead>
+                <tr><th>Roll</th><th>Setting</th></tr>
+            </thead>
+            <tbody>
+                {{range .Tables.Settings}}
+                <tr class="table-entry {{if eq .Text $.State.Setting}}selected{{end}}">
+                    <td class="roll-cell">{{.Min}}</td>
+                    <td>{{.Text}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    {{if .State.Setting}}
+    <div class="roll-result">
+        <strong>Setting:</strong> <span class="roll-highlight">{{.State.Setting}}</span>
+    </div>
+    {{end}}
+
+    <div class="step-actions">
+        <form hx-post="/adventures/{{.Adventure.ID}}/next"
+              hx-target="#step-panel"
+              hx-swap="innerHTML"
+              hx-indicator="#htmx-indicator">
+            <button type="submit" class="btn btn-primary">Next: Horror (TOMBS) &rarr;</button>
+        </form>
+    </div>
+</div>
+{{end}}

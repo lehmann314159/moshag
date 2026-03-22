@@ -1,0 +1,38 @@
+{{define "step-scenario"}}
+<div class="step-panel" id="step-panel-inner">
+    <div class="step-header">
+        <h2>Step 1: Scenario</h2>
+        <p class="step-description">Choose your adventure's starting hook. Each scenario frames what the crew has been hired to do.</p>
+    </div>
+
+    <div class="scenario-grid">
+        {{range $i, $name := .Tables.Scenarios}}
+        <div class="scenario-card {{if eq $name $.State.Scenario}}selected{{end}}"
+             hx-post="/adventures/{{$.Adventure.ID}}/chat"
+             hx-vals='{"message": "I want to use scenario {{add $i 1}}: {{$name}}"}'
+             hx-target="#chat-messages"
+             hx-swap="outerHTML"
+             hx-indicator="#htmx-indicator"
+             style="cursor:pointer;">
+            <div class="scenario-num">{{add $i 1}}</div>
+            <div class="scenario-name">{{$name}}</div>
+        </div>
+        {{end}}
+    </div>
+
+    {{if .State.Scenario}}
+    <div class="selected-scenario">
+        <strong>Selected:</strong> {{.State.Scenario}}
+    </div>
+    {{end}}
+
+    <div class="step-actions">
+        <form hx-post="/adventures/{{.Adventure.ID}}/next"
+              hx-target="#step-panel"
+              hx-swap="innerHTML"
+              hx-indicator="#htmx-indicator">
+            <button type="submit" class="btn btn-primary">Next: Setting &rarr;</button>
+        </form>
+    </div>
+</div>
+{{end}}

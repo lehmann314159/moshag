@@ -1,0 +1,37 @@
+{{define "step-survive"}}
+<div class="step-panel" id="step-panel-inner">
+    <div class="step-header">
+        <h2>Step 4: Something to Survive</h2>
+        <p class="step-description">What nightmare must the crew endure? Choose between surviving, solving, or saving — but usually only one is possible.</p>
+    </div>
+
+    <div class="step-content">
+        <div class="content-note">
+            <p>Use the chat to develop the Survive element with the Warden's assistant. Consider:</p>
+            <ul>
+                <li>Psychological trauma and stress</li>
+                <li>Social pressure and betrayal</li>
+                <li>Violent encounters</li>
+                <li>Environmental hazards</li>
+                <li>Resource scarcity</li>
+            </ul>
+        </div>
+
+        {{if .State.Survive}}
+        <div class="generated-content">
+            <h3>Survive Dilemma</h3>
+            <div class="content-text">{{safe .State.Survive}}</div>
+        </div>
+        {{end}}
+    </div>
+
+    <div class="step-actions">
+        <form hx-post="/adventures/{{.Adventure.ID}}/next"
+              hx-target="#step-panel"
+              hx-swap="innerHTML"
+              hx-indicator="#htmx-indicator">
+            <button type="submit" class="btn btn-primary">Next: Solve &rarr;</button>
+        </form>
+    </div>
+</div>
+{{end}}

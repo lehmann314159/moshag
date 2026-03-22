@@ -1,0 +1,32 @@
+{{define "step-final"}}
+<div class="step-panel" id="step-panel-inner">
+    <div class="step-header">
+        <h2>Step 8: Final Document</h2>
+        <p class="step-description">Generate the complete adventure document from all your prep work.</p>
+    </div>
+
+    <div class="step-content">
+        {{if .State.FinalDoc}}
+        <div class="final-doc">
+            <div class="final-doc-content">{{safe .State.FinalDoc}}</div>
+        </div>
+        {{else}}
+        <div class="content-note">
+            <p>Ask the Warden's assistant to generate the complete adventure document. The assistant will compile everything into a formatted, printable adventure.</p>
+        </div>
+        {{end}}
+    </div>
+
+    <div class="step-actions">
+        <form hx-post="/adventures/{{.Adventure.ID}}/next"
+              hx-target="#step-panel"
+              hx-swap="innerHTML"
+              hx-indicator="#htmx-indicator">
+            <button type="submit" class="btn btn-primary">Mark Complete &rarr;</button>
+        </form>
+        {{if .State.FinalDoc}}
+        <button class="btn btn-ghost" onclick="window.print()">Print / Export</button>
+        {{end}}
+    </div>
+</div>
+{{end}}
