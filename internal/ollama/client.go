@@ -2,6 +2,7 @@ package ollama
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,7 +22,7 @@ func NewClient(baseURL, model string) *Client {
 		baseURL: baseURL,
 		model:   model,
 		http: &http.Client{
-			Timeout: 180 * time.Second,
+			Timeout: 600 * time.Second,
 		},
 	}
 }
@@ -85,7 +86,8 @@ type chatResponse struct {
 }
 
 // Chat sends a conversation history to Ollama and returns the assistant's response.
-func (c *Client) Chat(messages []Message) (string, error) {
+// The context controls cancellation — if ctx is cancelled the HTTP request is aborted.
+func (c *Client) Chat(ctx context.Context, messages []Message) (string, error) {
 	req := chatRequest{
 		Model:    c.model,
 		Messages: messages,
@@ -97,7 +99,13 @@ func (c *Client) Chat(messages []Message) (string, error) {
 		return "", fmt.Errorf("ollama: marshal chat request: %w", err)
 	}
 
-	resp, err := c.http.Post(c.baseURL+"/api/chat", "application/json", bytes.NewReader(data))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/api/chat", bytes.NewReader(data))
+	if err != nil {
+		return "", fmt.Errorf("ollama: create request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.http.Do(httpReq)
 	if err != nil {
 		return "", fmt.Errorf("ollama: chat request: %w", err)
 	}

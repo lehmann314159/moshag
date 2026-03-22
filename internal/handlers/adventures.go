@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lehmann314159/moshag/internal/auth"
@@ -21,6 +23,31 @@ type adventurePageData struct {
 	Messages    []*db.Message
 	StepOrder   []string
 	StepOptions []tables.StepOption
+	Phase       string // "gather" or "collaborate"
+}
+
+// stepAutoStart returns true for steps that skip the gather phase and go straight to AI conversation.
+func stepAutoStart(step string) bool {
+	return len(tables.StepOptions(step)) == 0
+}
+
+// autoStartChat fires the opening AI message for a step in a goroutine.
+func (h *Handlers) autoStartChat(adventureID int64, step string, state *db.AdventureState) {
+	userMsg := "Let's begin the " + tables.StepLabel(step) + " step."
+	if err := h.db.AddMessage(adventureID, "user", step, userMsg); err != nil {
+		log.Printf("auto-start save user message: %v", err)
+		return
+	}
+	dbMessages, _ := h.db.GetMessages(adventureID, step)
+	chatMessages := buildChatMessages(step, state, dbMessages)
+	response, err := h.ollama.Chat(context.Background(), chatMessages)
+	if err != nil {
+		log.Printf("auto-start chat %s/%d: %v", step, adventureID, err)
+		return
+	}
+	if err := h.db.AddMessage(adventureID, "assistant", step, response); err != nil {
+		log.Printf("auto-start save assistant message: %v", err)
+	}
 }
 
 // chatPartialData is passed to the chat-messages partial.
@@ -112,6 +139,14 @@ func (h *Handlers) ShowAdventure(w http.ResponseWriter, r *http.Request) {
 		messages = nil
 	}
 
+	phase := "gather"
+	if len(messages) > 0 {
+		phase = "collaborate"
+	} else if stepAutoStart(adventure.CurrentStep) {
+		phase = "collaborate"
+		go h.autoStartChat(id, adventure.CurrentStep, state)
+	}
+
 	data := adventurePageData{
 		PageData:    pageData(r, "MOSHAG — "+adventure.Title, "adventure"),
 		Adventure:   adventure,
@@ -119,6 +154,7 @@ func (h *Handlers) ShowAdventure(w http.ResponseWriter, r *http.Request) {
 		Messages:    messages,
 		StepOrder:   tables.StepOrder,
 		StepOptions: tables.StepOptions(adventure.CurrentStep),
+		Phase:       phase,
 	}
 	h.render(w, "base", data)
 }
@@ -143,14 +179,13 @@ func (h *Handlers) StartChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	selection := r.FormValue("selection")
+	selection := strings.Join(r.Form["selection"], ", ")
 	guidance := r.FormValue("guidance")
 	context := r.FormValue("message")
 
 	userMsg := buildUserMessage(adventure.CurrentStep, selection, guidance, context)
 	if userMsg == "" {
-		http.Error(w, "Empty message", http.StatusBadRequest)
-		return
+		userMsg = "Let's begin the " + tables.StepLabel(adventure.CurrentStep) + " step."
 	}
 
 	// Save selection to state.
@@ -177,7 +212,7 @@ func (h *Handlers) StartChat(w http.ResponseWriter, r *http.Request) {
 	chatMessages := buildChatMessages(adventure.CurrentStep, state, dbMessages)
 
 	// Call Ollama.
-	response, err := h.ollama.Chat(chatMessages)
+	response, err := h.ollama.Chat(r.Context(), chatMessages)
 	if err != nil {
 		log.Printf("ollama start chat: %v", err)
 		response = "I'm having trouble connecting to the AI right now. Please try again."
@@ -219,7 +254,13 @@ func (h *Handlers) Chat(w http.ResponseWriter, r *http.Request) {
 
 	userMsg := r.FormValue("message")
 	if userMsg == "" {
-		http.Error(w, "Empty message", http.StatusBadRequest)
+		// Return current messages unchanged rather than an error.
+		msgs, _ := h.db.GetMessages(id, adventure.CurrentStep)
+		h.renderPartial(w, "chat-messages", chatPartialData{
+			AdventureID: id,
+			Step:        adventure.CurrentStep,
+			Messages:    msgs,
+		})
 		return
 	}
 
@@ -237,7 +278,7 @@ func (h *Handlers) Chat(w http.ResponseWriter, r *http.Request) {
 	chatMessages := buildChatMessages(adventure.CurrentStep, state, dbMessages)
 
 	// Call Ollama.
-	response, err := h.ollama.Chat(chatMessages)
+	response, err := h.ollama.Chat(r.Context(), chatMessages)
 	if err != nil {
 		log.Printf("ollama chat: %v", err)
 		response = "I'm having trouble connecting to the AI right now. Please try again."
@@ -291,7 +332,7 @@ func (h *Handlers) Done(w http.ResponseWriter, r *http.Request) {
 			" step. Be specific about the details chosen — this will inform the rest of the adventure."
 		chatMessages = append(chatMessages, ollama.Message{Role: "user", Content: summaryPrompt})
 
-		summary, err := h.ollama.Chat(chatMessages)
+		summary, err := h.ollama.Chat(r.Context(), chatMessages)
 		if err != nil {
 			log.Printf("generate step summary for %s/%d: %v", adventure.CurrentStep, id, err)
 		} else if summary != "" {
@@ -318,7 +359,15 @@ func (h *Handlers) Done(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	state, _ = adventure.ParseState()
-	messages, _ := h.db.GetMessages(id, nextStep) // empty → gather phase
+	messages, _ := h.db.GetMessages(id, nextStep)
+
+	phase := "gather"
+	if len(messages) > 0 {
+		phase = "collaborate"
+	} else if stepAutoStart(nextStep) {
+		phase = "collaborate"
+		go h.autoStartChat(id, nextStep, state)
+	}
 
 	data := adventurePageData{
 		PageData:    pageData(r, "MOSHAG — "+adventure.Title, "adventure"),
@@ -327,6 +376,7 @@ func (h *Handlers) Done(w http.ResponseWriter, r *http.Request) {
 		Messages:    messages,
 		StepOrder:   tables.StepOrder,
 		StepOptions: tables.StepOptions(nextStep),
+		Phase:       phase,
 	}
 	h.renderPartial(w, "adventure-workspace", data)
 }
@@ -471,6 +521,14 @@ func (h *Handlers) NextStep(w http.ResponseWriter, r *http.Request) {
 	state, _ = adventure.ParseState()
 	messages, _ := h.db.GetMessages(id, nextStep)
 
+	phase := "gather"
+	if len(messages) > 0 {
+		phase = "collaborate"
+	} else if stepAutoStart(nextStep) {
+		phase = "collaborate"
+		go h.autoStartChat(id, nextStep, state)
+	}
+
 	data := adventurePageData{
 		PageData:    pageData(r, "MOSHAG — "+adventure.Title, "adventure"),
 		Adventure:   adventure,
@@ -478,6 +536,7 @@ func (h *Handlers) NextStep(w http.ResponseWriter, r *http.Request) {
 		Messages:    messages,
 		StepOrder:   tables.StepOrder,
 		StepOptions: tables.StepOptions(nextStep),
+		Phase:       phase,
 	}
 	h.renderPartial(w, "adventure-workspace", data)
 }
@@ -505,6 +564,39 @@ func (h *Handlers) DeleteAdventure(w http.ResponseWriter, r *http.Request) {
 	h.renderPartial(w, "adventure-list", struct {
 		Adventures []*db.Adventure
 	}{Adventures: adventures})
+}
+
+// ClearStep handles POST /adventures/{id}/clear — deletes messages for the current step and returns to gather phase.
+func (h *Handlers) ClearStep(w http.ResponseWriter, r *http.Request) {
+	id, err := parseAdventureID(r)
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	adventure, err := h.db.GetAdventure(id, currentUserID(r))
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	if err := h.db.DeleteStepMessages(id, adventure.CurrentStep); err != nil {
+		log.Printf("clear step messages: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	state, _ := adventure.ParseState()
+	data := adventurePageData{
+		PageData:    pageData(r, "MOSHAG — "+adventure.Title, "adventure"),
+		Adventure:   adventure,
+		State:       state,
+		Messages:    nil,
+		StepOrder:   tables.StepOrder,
+		StepOptions: tables.StepOptions(adventure.CurrentStep),
+		Phase:       "gather",
+	}
+	h.renderPartial(w, "adventure-workspace", data)
 }
 
 // Messages handles GET /adventures/{id}/messages — polls for chat messages.
@@ -582,7 +674,7 @@ func (h *Handlers) synthesizeHorror(adventureID int64, adventure *db.Adventure, 
 		{Role: "user", Content: prompt},
 	}
 
-	response, err := h.ollama.Chat(messages)
+	response, err := h.ollama.Chat(context.Background(), messages)
 	if err != nil {
 		log.Printf("synthesize horror for %d: %v", adventureID, err)
 		return

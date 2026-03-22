@@ -326,26 +326,26 @@ func StepOptions(step string) []StepOption {
 		}
 	case "survive":
 		return []StepOption{
-			{Value: "full-survive", Label: "Generate survival dilemmas"},
-			{Value: "psychological", Label: "Focus: psychological trauma"},
-			{Value: "violence", Label: "Focus: violent encounters"},
-			{Value: "environmental", Label: "Focus: environmental hazards"},
-			{Value: "resources", Label: "Focus: resource scarcity"},
-			{Value: "social", Label: "Focus: social pressure"},
+			{Value: "psychological", Label: "Psychological trauma"},
+			{Value: "violence", Label: "Violent encounters"},
+			{Value: "environmental", Label: "Environmental hazards"},
+			{Value: "resources", Label: "Resource scarcity"},
+			{Value: "social", Label: "Social pressure"},
 		}
 	case "solve":
-		return []StepOption{
-			{Value: "full-mystery", Label: "Generate full mystery structure"},
-			{Value: "central-question", Label: "Focus: the central question"},
-			{Value: "puzzles", Label: "Focus: puzzles and obstacles"},
-			{Value: "clues", Label: "Focus: clues and evidence"},
-		}
+		return nil
 	case "save":
 		return []StepOption{
-			{Value: "all-npcs", Label: "Generate all three NPCs"},
-			{Value: "gatekeeper", Label: "The Gatekeeper (powerful, unhelpful)"},
-			{Value: "ally", Label: "An ally (helpful)"},
-			{Value: "wildcard", Label: "A wildcard"},
+			{Value: "Gatekeeper", Label: "Gatekeeper — powerful, unhelpful"},
+			{Value: "Employer", Label: "Employer — powerful, neither"},
+			{Value: "Benefactor", Label: "Benefactor — powerful, helpful"},
+			{Value: "Traitor", Label: "Traitor — neither, unhelpful"},
+			{Value: "Survivor", Label: "Survivor — neither, neither"},
+			{Value: "Expert", Label: "Expert — neither, helpful"},
+			{Value: "Coward", Label: "Coward — powerless, unhelpful"},
+			{Value: "Victim", Label: "Victim — powerless, neither"},
+			{Value: "Drinking Buddy", Label: "Drinking Buddy — powerless, helpful"},
+			{Value: "Wildcard", Label: "Wildcard — unpredictable"},
 		}
 	case "map":
 		return []StepOption{
@@ -398,20 +398,14 @@ func StepOptionPrompt(step, value string) string {
 			return "Roll the " + value + " for me."
 		}
 	case "survive":
-		if value == "full-survive" {
-			return "Generate the survival dilemmas for this adventure."
-		}
-		return "Focus on " + value + " as the main survival pressure."
+		return "The main survival pressure for this adventure is: " + value + "."
 	case "solve":
 		if value == "full-mystery" {
 			return "Generate the full mystery structure."
 		}
 		return "Focus on " + value + "."
 	case "save":
-		if value == "all-npcs" {
-			return "Generate all three NPCs."
-		}
-		return "Generate " + value + "."
+		return "Generate NPCs for these roles: " + value + "."
 	case "map":
 		if value == "full-map" {
 			return "Generate all 10 locations for the map."
@@ -441,11 +435,11 @@ func SystemPrompt(step string) string {
 
 		"survive": base + contextNote + ` This step defines the physical or psychological pressure that forces hard choices — not the mystery, not the NPCs, just the relentless survival threat. Players can usually only do one of: Survive, Solve, or Save. Ground the threat in the established Horror and setting. What is actively trying to kill or break the crew?`,
 
-		"solve": base + contextNote + ` This step builds the mystery layer — the central question players must answer, the clues that point toward it, and the obstacles in the way. The Horror is known to the Warden but not the players; clues should point to people, places, and things in the established setting. Do not re-cover the Horror's nature — focus on what evidence exists and how players might find it.`,
+		"solve": base + contextNote + ` This step builds the mystery using three parts — work through all three before the step is complete. The three questions form a chain, each unlocking the next: (1) "What happened here?" establishes the event or truth the players uncover. (2) "Who did it?" — once they know what happened, who caused it? (3) "Where are they?" — once they know who, where is that person, creature, or thing now? Work through all three in order, making each answer specific to the established Horror, setting, and scenario. Then define the PUZZLES — 2-3 concrete obstacles between the players and those answers (a locked area, an uncooperative NPC, a missing piece of evidence). Finally define the CLUES — specific things in the world (objects, people, places) that point toward each answer. When a clue is found it should raise a new question. The Horror is known to the Warden but hidden from players — focus on what evidence exists and how players might encounter it.`,
 
 		"save": base + contextNote + ` This step creates the NPCs. Use the character matrix: Gatekeeper (powerful/unhelpful), Employer, Benefactor, Traitor, Survivor, Expert, Coward, Victim, Drinking Buddy, Wildcard. Each NPC needs a name, role in the matrix, one defining physical or behavioral trait, and one concrete want that puts them in conflict or alignment with the crew. Root them in the established setting and scenario.`,
 
-		"map": base + contextNote + ` This step maps the adventure location as 10 numbered boxes in a rough flowchart. Box 1 is the crew's entry point. Include the Horror's lair, a defensible safe zone, at least one locked or secret area, and areas that reflect the setting's atmosphere. Each box: a short name and 1-2 sentences. The map should already feel like the setting described earlier — do not reinvent it.`,
+		"map": base + contextNote + ` This step maps the adventure location as 10 numbered boxes in a rough flowchart. Use the established setting, Horror, survival threat, mystery, and NPCs as your raw material — every significant element from prior steps should have a physical home on the map. Box 1 is the crew's entry point. The Horror's lair must appear. Place the survival threat in specific locations (e.g., if the threat is environmental, which areas are affected?). Give NPCs starting locations. Include at least one locked or secret area tied to the mystery's clues. Include a defensible safe zone. Each box gets a short name and 1-2 sentences grounded in the specific details already established — not generic sci-fi rooms. Do not invent new lore; express what has already been decided spatially.`,
 
 		"final": base + contextNote + ` Generate the complete adventure document using everything established across all steps. Sections: Session Title, Scenario, Setting, The Horror (TOMBS elements woven into narrative), Something to Survive, Something to Solve, Someone to Save (full NPC details), The Map (all 10 locations). Terse and evocative throughout — this is a Warden's reference, not a novel.`,
 	}

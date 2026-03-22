@@ -2,7 +2,17 @@
 <div class="collaborate-panel">
     <div class="chat-header">
         <span class="chat-title">Warden's Assistant — {{stepLabel .Adventure.CurrentStep}}</span>
-        <span class="chat-step-label">Collaborate phase</span>
+        <div class="chat-header-actions">
+            <button type="button"
+                    hx-post="/adventures/{{.Adventure.ID}}/clear"
+                    hx-target="#adventure-workspace"
+                    hx-swap="outerHTML"
+                    hx-confirm="Clear this step's conversation and start over?"
+                    class="btn btn-ghost btn-sm">
+                Start Over
+            </button>
+            <span class="chat-step-label">Collaborate phase</span>
+        </div>
     </div>
 
     {{template "chat-messages" (dict "AdventureID" .Adventure.ID "Step" .Adventure.CurrentStep "Messages" .Messages)}}
@@ -30,6 +40,9 @@
                         hx-vals='{"message": "Please summarize what we have decided for this step so far, in 2-3 sentences."}'
                         class="btn btn-ghost">
                     Restate
+                </button>
+                <button type="button" id="cancel-ai-btn" class="btn btn-danger cancel-ai-btn" style="display:none" onclick="cancelAI()">
+                    Cancel
                 </button>
                 <button type="button"
                         hx-post="/adventures/{{.Adventure.ID}}/done"

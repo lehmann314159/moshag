@@ -1,10 +1,23 @@
 {{define "chat-messages"}}
-<div id="chat-messages" class="chat-messages">
-    {{range .Messages}}
-    <div class="message message-{{.Role}}">
-        <div class="message-role">{{if eq .Role "user"}}You{{else}}Warden's AI{{end}}</div>
-        <div class="message-content">{{safe .Content}}</div>
-    </div>
+<div id="chat-messages" class="chat-messages"
+    {{if not .Messages}}
+    hx-get="/adventures/{{.AdventureID}}/messages?step={{.Step}}"
+    hx-trigger="every 2s"
+    hx-target="#chat-messages"
+    hx-swap="outerHTML"
+    {{end}}>
+    {{if .Messages}}
+        {{range .Messages}}
+        <div class="message message-{{.Role}}">
+            <div class="message-role">{{if eq .Role "user"}}You{{else}}Warden's AI{{end}}</div>
+            <div class="message-content">{{safe .Content}}</div>
+        </div>
+        {{end}}
+    {{else}}
+        <div class="message message-assistant">
+            <div class="message-role">Warden's AI</div>
+            <div class="message-content thinking-dots"><span></span><span></span><span></span></div>
+        </div>
     {{end}}
 </div>
 {{end}}

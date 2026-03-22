@@ -27,6 +27,7 @@ func (s *Server) setupRoutes() {
 		r.Post("/{id}/start", s.handlers.StartChat)
 		r.Post("/{id}/chat", s.handlers.Chat)
 		r.Post("/{id}/done", s.handlers.Done)
+		r.Post("/{id}/clear", s.handlers.ClearStep)
 		r.Post("/{id}/roll", s.handlers.Roll)
 		r.Post("/{id}/next", s.handlers.NextStep)
 		r.Delete("/{id}", s.handlers.DeleteAdventure)

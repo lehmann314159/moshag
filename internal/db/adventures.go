@@ -166,6 +166,12 @@ func (db *DB) GetMessages(adventureID int64, step string) ([]*Message, error) {
 	return messages, rows.Err()
 }
 
+// DeleteStepMessages removes all messages for a specific step of an adventure.
+func (db *DB) DeleteStepMessages(adventureID int64, step string) error {
+	_, err := db.Exec(`DELETE FROM messages WHERE adventure_id = ? AND step = ?`, adventureID, step)
+	return err
+}
+
 // DeleteAdventure removes an adventure and its messages, verifying ownership.
 func (db *DB) DeleteAdventure(id, userID int64) error {
 	// Delete messages first (no cascade in SQLite without pragma)

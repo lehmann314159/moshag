@@ -1,6 +1,34 @@
 {{define "adventure-content"}}
 {{template "adventure-workspace" .}}
 <script>
+function cancelAI() {
+    // Abort any in-flight HTMX request on the collaborate form.
+    var form = document.querySelector('.collaborate-form');
+    if (form) htmx.trigger(form, 'htmx:abort');
+    // Remove the thinking indicator.
+    var thinking = document.getElementById('thinking-indicator');
+    if (thinking) thinking.remove();
+    document.getElementById('cancel-ai-btn').style.display = 'none';
+}
+
+// Show/hide the cancel button while a request is in flight.
+document.addEventListener('htmx:beforeRequest', function(e) {
+    var btn = document.getElementById('cancel-ai-btn');
+    if (btn) btn.style.display = 'inline-flex';
+});
+document.addEventListener('htmx:afterRequest', function(e) {
+    var btn = document.getElementById('cancel-ai-btn');
+    if (btn) btn.style.display = 'none';
+});
+
+// Scroll chat to bottom after every HTMX swap.
+document.addEventListener('htmx:afterSettle', function(e) {
+    var msgs = document.getElementById('chat-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+});
+
+var _thinkingTimer = null;
+
 function chatBeforeRequest(form) {
     var msgs = document.getElementById('chat-messages');
     if (!msgs) return;
@@ -16,15 +44,28 @@ function chatBeforeRequest(form) {
         msgs.appendChild(userDiv);
     }
 
-    // Show thinking indicator
+    // Show thinking indicator with elapsed timer
     var thinking = document.createElement('div');
     thinking.className = 'message message-assistant';
     thinking.id = 'thinking-indicator';
-    thinking.innerHTML = '<div class="message-role">Warden\'s AI</div>' +
+    thinking.innerHTML = '<div class="message-role">Warden\'s AI <span id="thinking-timer" class="thinking-timer">0s</span></div>' +
         '<div class="message-content thinking-dots"><span></span><span></span><span></span></div>';
     msgs.appendChild(thinking);
     msgs.scrollTop = msgs.scrollHeight;
+
+    // Start elapsed timer
+    var start = Date.now();
+    _thinkingTimer = setInterval(function() {
+        var el = document.getElementById('thinking-timer');
+        if (!el) { clearInterval(_thinkingTimer); return; }
+        var s = Math.floor((Date.now() - start) / 1000);
+        el.textContent = s + 's';
+    }, 1000);
 }
+
+document.addEventListener('htmx:afterRequest', function() {
+    if (_thinkingTimer) { clearInterval(_thinkingTimer); _thinkingTimer = null; }
+});
 </script>
 {{end}}
 
@@ -51,7 +92,7 @@ function chatBeforeRequest(form) {
 
     <!-- Right: gather or collaborate phase -->
     <div class="main-panel" id="main-panel">
-        {{if .Messages}}
+        {{if eq .Phase "collaborate"}}
             {{template "collaborate-panel" (dict "Adventure" .Adventure "State" .State "Messages" .Messages)}}
         {{else}}
             {{template "step-form" (dict "Adventure" .Adventure "State" .State "StepOptions" .StepOptions)}}

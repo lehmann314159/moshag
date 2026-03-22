@@ -541,8 +541,8 @@ a:hover { color: var(--text-bright); text-decoration: underline; }
 
 .step-context-entry {
     display: flex;
-    gap: 0.5rem;
-    align-items: baseline;
+    flex-direction: column;
+    gap: 0.15rem;
 }
 
 .step-context-step {
@@ -550,12 +550,12 @@ a:hover { color: var(--text-bright); text-decoration: underline; }
     font-size: 0.68rem;
     color: var(--accent-glow);
     text-transform: uppercase;
-    flex-shrink: 0;
+    letter-spacing: 0.06em;
 }
 
 .step-context-summary {
     font-size: 0.78rem;
-    color: var(--text-dim);
+    color: var(--text);
     line-height: 1.4;
 }
 
@@ -593,6 +593,34 @@ a:hover { color: var(--text-bright); text-decoration: underline; }
 
 .step-label-grow {
     flex: 1;
+}
+
+.npc-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 0.25rem;
+}
+
+.npc-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+}
+.npc-checkbox-label:hover { color: var(--text-bright); }
+
+.npc-checkbox {
+    accent-color: var(--accent);
+    width: 13px;
+    height: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .step-select,
@@ -1045,6 +1073,12 @@ a:hover { color: var(--text-bright); text-decoration: underline; }
     flex-shrink: 0;
 }
 
+.chat-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 .chat-title {
     font-family: var(--font-mono);
     font-size: 0.8rem;
@@ -1072,6 +1106,13 @@ a:hover { color: var(--text-bright); text-decoration: underline; }
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius);
     max-width: 100%;
+}
+
+.thinking-timer {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-left: 0.4rem;
 }
 
 .message-role {

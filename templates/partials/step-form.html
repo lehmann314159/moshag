@@ -22,8 +22,19 @@
           hx-indicator="#htmx-indicator">
 
         <div class="step-form-body">
-            <!-- Left: labeled selects -->
+            <!-- Left: labeled selects or checkboxes -->
             <div class="step-form-selects">
+                {{if eq .Adventure.CurrentStep "save"}}
+                <span class="step-label">NPC Roles</span>
+                <div class="npc-checkboxes">
+                    {{range .StepOptions}}
+                    <label class="npc-checkbox-label">
+                        <input type="checkbox" name="selection" value="{{.Value}}" class="npc-checkbox">
+                        {{.Label}}
+                    </label>
+                    {{end}}
+                </div>
+                {{else}}
                 <label class="step-label">
                     {{stepLabel .Adventure.CurrentStep}}
                     <select name="selection" class="step-select">
@@ -33,6 +44,7 @@
                         {{end}}
                     </select>
                 </label>
+                {{end}}
                 <label class="step-label">
                     Response style
                     <select name="guidance" class="guidance-select">
