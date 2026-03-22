@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -62,6 +63,7 @@ type collaboratePanelData struct {
 	Adventure *db.Adventure
 	State     *db.AdventureState
 	Messages  []*db.Message
+	Streaming bool
 }
 
 // stepFormData is passed to the step-form partial.
@@ -207,29 +209,14 @@ func (h *Handlers) StartChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load messages for Ollama history.
+	// Load messages saved so far (user message only — AI will stream).
 	dbMessages, _ := h.db.GetMessages(id, adventure.CurrentStep)
-	chatMessages := buildChatMessages(adventure.CurrentStep, state, dbMessages)
-
-	// Call Ollama.
-	response, err := h.ollama.Chat(r.Context(), chatMessages)
-	if err != nil {
-		log.Printf("ollama start chat: %v", err)
-		response = "I'm having trouble connecting to the AI right now. Please try again."
-	}
-
-	// Save assistant response.
-	if err := h.db.AddMessage(id, "assistant", adventure.CurrentStep, response); err != nil {
-		log.Printf("add assistant message: %v", err)
-	}
-
-	// Reload messages for render.
-	dbMessages, _ = h.db.GetMessages(id, adventure.CurrentStep)
 
 	h.renderPartial(w, "collaborate-panel", collaboratePanelData{
 		Adventure: adventure,
 		State:     state,
 		Messages:  dbMessages,
+		Streaming: true,
 	})
 }
 
@@ -271,28 +258,10 @@ func (h *Handlers) Chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state, _ := adventure.ParseState()
-
-	// Load all messages for this step.
+	// Load messages saved so far (user message only — AI will stream).
 	dbMessages, _ := h.db.GetMessages(id, adventure.CurrentStep)
-	chatMessages := buildChatMessages(adventure.CurrentStep, state, dbMessages)
 
-	// Call Ollama.
-	response, err := h.ollama.Chat(r.Context(), chatMessages)
-	if err != nil {
-		log.Printf("ollama chat: %v", err)
-		response = "I'm having trouble connecting to the AI right now. Please try again."
-	}
-
-	// Save assistant response.
-	if err := h.db.AddMessage(id, "assistant", adventure.CurrentStep, response); err != nil {
-		log.Printf("add assistant message: %v", err)
-	}
-
-	// Reload messages.
-	dbMessages, _ = h.db.GetMessages(id, adventure.CurrentStep)
-
-	h.renderPartial(w, "chat-messages", chatPartialData{
+	h.renderPartial(w, "chat-messages-stream", chatPartialData{
 		AdventureID: id,
 		Step:        adventure.CurrentStep,
 		Messages:    dbMessages,
@@ -693,6 +662,69 @@ func (h *Handlers) synthesizeHorror(adventureID int64, adventure *db.Adventure, 
 			log.Printf("update horror summary: %v", err)
 		}
 	}
+}
+
+// Stream handles GET /adventures/{id}/stream — SSE streaming of an AI chat response.
+// It builds the chat message history, streams tokens from Ollama, saves the full response, then sends [DONE].
+func (h *Handlers) Stream(w http.ResponseWriter, r *http.Request) {
+	id, err := parseAdventureID(r)
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	adventure, err := h.db.GetAdventure(id, currentUserID(r))
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	step := r.URL.Query().Get("step")
+	if step == "" {
+		step = adventure.CurrentStep
+	}
+
+	state, _ := adventure.ParseState()
+	dbMessages, _ := h.db.GetMessages(id, step)
+	chatMessages := buildChatMessages(step, state, dbMessages)
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming not supported", http.StatusInternalServerError)
+		return
+	}
+
+	sendEvent := func(data string) {
+		fmt.Fprintf(w, "data: %s\n\n", data)
+		flusher.Flush()
+	}
+
+	var assembled strings.Builder
+	err = h.ollama.ChatStream(r.Context(), chatMessages, func(token string) {
+		assembled.WriteString(token)
+		encoded, _ := json.Marshal(token)
+		sendEvent(string(encoded))
+	})
+
+	if err != nil {
+		log.Printf("stream %s/%d: %v", step, id, err)
+		sendEvent(`"[ERROR]"`)
+		return
+	}
+
+	fullResponse := assembled.String()
+	if fullResponse != "" {
+		if err := h.db.AddMessage(id, "assistant", step, fullResponse); err != nil {
+			log.Printf("save streamed response %s/%d: %v", step, id, err)
+		}
+	}
+
+	sendEvent(`"[DONE]"`)
 }
 
 // saveSelectionToState writes the primary select choice into the structured state.

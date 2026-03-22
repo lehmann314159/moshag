@@ -15,7 +15,11 @@
         </div>
     </div>
 
+    {{if .Streaming}}
+    {{template "chat-messages-stream" (dict "AdventureID" .Adventure.ID "Step" .Adventure.CurrentStep "Messages" .Messages)}}
+    {{else}}
     {{template "chat-messages" (dict "AdventureID" .Adventure.ID "Step" .Adventure.CurrentStep "Messages" .Messages)}}
+    {{end}}
 
     <div class="collaborate-input">
         <form class="collaborate-form"

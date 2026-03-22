@@ -1,0 +1,97 @@
+{{define "chat-messages-stream"}}
+<div id="chat-messages" class="chat-messages">
+    {{range .Messages}}
+    <div class="message message-{{.Role}}">
+        <div class="message-role">{{if eq .Role "user"}}You{{else}}Warden's AI{{end}}</div>
+        <div class="message-content">{{safe .Content}}</div>
+    </div>
+    {{end}}
+    <div class="message message-assistant" id="streaming-message">
+        <div class="message-role">Warden's AI <span id="thinking-timer" class="thinking-timer">0s</span></div>
+        <div class="message-content streaming-content" id="streaming-content"><span class="thinking-dots"><span></span><span></span><span></span></span></div>
+    </div>
+</div>
+<script>
+(function() {
+    var adventureID = {{.AdventureID}};
+    var step = "{{.Step}}";
+    var contentEl = document.getElementById('streaming-content');
+    var timerEl = document.getElementById('thinking-timer');
+    var cancelBtn = document.getElementById('cancel-ai-btn');
+    var assembled = '';
+    var started = false;
+
+    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+
+    var start = Date.now();
+    var _timer = setInterval(function() {
+        if (!timerEl) { clearInterval(_timer); return; }
+        timerEl.textContent = Math.floor((Date.now() - start) / 1000) + 's';
+    }, 1000);
+
+    // Scroll to bottom on open.
+    var msgs = document.getElementById('chat-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+
+    var es = new EventSource('/adventures/' + adventureID + '/stream?step=' + encodeURIComponent(step));
+    window._activeEventSource = es;
+
+    es.onmessage = function(e) {
+        if (e.data === '"[DONE]"') {
+            clearInterval(_timer);
+            es.close();
+            window._activeEventSource = null;
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            htmx.ajax('GET', '/adventures/' + adventureID + '/messages?step=' + encodeURIComponent(step), {
+                target: '#chat-messages',
+                swap: 'outerHTML'
+            });
+            return;
+        }
+        if (e.data === '"[ERROR]"') {
+            clearInterval(_timer);
+            es.close();
+            window._activeEventSource = null;
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (contentEl) contentEl.innerHTML = '<em>Error connecting to AI. Please try again.</em>';
+            return;
+        }
+        try {
+            var token = JSON.parse(e.data);
+            if (!started) {
+                started = true;
+                if (contentEl) contentEl.innerHTML = '';
+            }
+            assembled += token;
+            if (contentEl) contentEl.textContent = assembled;
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        } catch(err) {}
+    };
+
+    es.onerror = function() {
+        clearInterval(_timer);
+        es.close();
+        window._activeEventSource = null;
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        if (contentEl && !started) contentEl.innerHTML = '<em>Connection lost. Please try again.</em>';
+    };
+
+    // Override cancelAI to handle this EventSource.
+    window.cancelAI = function() {
+        if (window._activeEventSource) {
+            window._activeEventSource.close();
+            window._activeEventSource = null;
+        }
+        clearInterval(_timer);
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        if (contentEl) contentEl.innerHTML = '<em>Cancelled.</em>';
+        setTimeout(function() {
+            htmx.ajax('GET', '/adventures/' + adventureID + '/messages?step=' + encodeURIComponent(step), {
+                target: '#chat-messages',
+                swap: 'outerHTML'
+            });
+        }, 800);
+    };
+})();
+</script>
+{{end}}

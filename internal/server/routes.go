@@ -24,6 +24,7 @@ func (s *Server) setupRoutes() {
 		r.Post("/new", s.handlers.NewAdventure)
 		r.Get("/{id}", s.handlers.ShowAdventure)
 		r.Get("/{id}/messages", s.handlers.Messages)
+		r.Get("/{id}/stream", s.handlers.Stream)
 		r.Post("/{id}/start", s.handlers.StartChat)
 		r.Post("/{id}/chat", s.handlers.Chat)
 		r.Post("/{id}/done", s.handlers.Done)

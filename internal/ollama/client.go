@@ -1,6 +1,7 @@
 package ollama
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -67,6 +68,60 @@ func (c *Client) Generate(system, prompt string) (string, error) {
 		return "", fmt.Errorf("ollama: decode response: %w", err)
 	}
 	return result.Response, nil
+}
+
+type streamChunk struct {
+	Message struct {
+		Content string `json:"content"`
+	} `json:"message"`
+	Done bool `json:"done"`
+}
+
+// ChatStream sends a conversation to Ollama and calls onToken for each streamed token.
+// The context controls cancellation — if ctx is cancelled the HTTP request is aborted.
+func (c *Client) ChatStream(ctx context.Context, messages []Message, onToken func(string)) error {
+	req := chatRequest{
+		Model:    c.model,
+		Messages: messages,
+		Stream:   true,
+	}
+	data, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("ollama: marshal stream request: %w", err)
+	}
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/api/chat", bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("ollama: create stream request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	resp, err := c.http.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("ollama: chat stream request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("ollama: chat stream returned %d", resp.StatusCode)
+	}
+	scanner := bufio.NewScanner(resp.Body)
+	buf := make([]byte, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+		var chunk streamChunk
+		if err := json.Unmarshal([]byte(line), &chunk); err != nil {
+			continue
+		}
+		if chunk.Message.Content != "" {
+			onToken(chunk.Message.Content)
+		}
+		if chunk.Done {
+			break
+		}
+	}
+	return scanner.Err()
 }
 
 // Message represents a single message in a chat conversation.

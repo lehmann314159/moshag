@@ -17,6 +17,7 @@ document.addEventListener('htmx:beforeRequest', function(e) {
     if (btn) btn.style.display = 'inline-flex';
 });
 document.addEventListener('htmx:afterRequest', function(e) {
+    if (window._activeEventSource) return; // streaming in progress, keep cancel visible
     var btn = document.getElementById('cancel-ai-btn');
     if (btn) btn.style.display = 'none';
 });
@@ -65,6 +66,9 @@ function chatBeforeRequest(form) {
 
 document.addEventListener('htmx:afterRequest', function() {
     if (_thinkingTimer) { clearInterval(_thinkingTimer); _thinkingTimer = null; }
+    // Remove thinking indicator injected by chatBeforeRequest (streaming template replaces it).
+    var thinking = document.getElementById('thinking-indicator');
+    if (thinking) thinking.remove();
 });
 </script>
 {{end}}

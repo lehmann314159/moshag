@@ -1115,6 +1115,10 @@ a:hover { color: var(--text-bright); text-decoration: underline; }
     margin-left: 0.4rem;
 }
 
+.streaming-content {
+    white-space: pre-wrap;
+}
+
 .message-role {
     font-family: var(--font-mono);
     font-size: 0.65rem;
