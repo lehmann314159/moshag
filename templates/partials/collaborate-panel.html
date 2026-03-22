@@ -1,0 +1,46 @@
+{{define "collaborate-panel"}}
+<div class="collaborate-panel">
+    <div class="chat-header">
+        <span class="chat-title">Warden's Assistant — {{stepLabel .Adventure.CurrentStep}}</span>
+        <span class="chat-step-label">Collaborate phase</span>
+    </div>
+
+    {{template "chat-messages" (dict "AdventureID" .Adventure.ID "Step" .Adventure.CurrentStep "Messages" .Messages)}}
+
+    <div class="collaborate-input">
+        <form class="collaborate-form"
+              hx-post="/adventures/{{.Adventure.ID}}/chat"
+              hx-target="#chat-messages"
+              hx-swap="outerHTML"
+              hx-indicator="#htmx-indicator"
+              hx-on::before-request="chatBeforeRequest(this)"
+              hx-on::after-request="this.querySelector('[name=message]').value=''">
+            <textarea name="message"
+                      class="collaborate-textarea"
+                      rows="3"
+                      placeholder="Continue the conversation..."
+                      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.closest('form').requestSubmit();}"></textarea>
+            <div class="collaborate-actions">
+                <button type="submit" class="btn btn-primary">Send</button>
+                <button type="button"
+                        hx-post="/adventures/{{.Adventure.ID}}/chat"
+                        hx-target="#chat-messages"
+                        hx-swap="outerHTML"
+                        hx-indicator="#htmx-indicator"
+                        hx-vals='{"message": "Please summarize what we have decided for this step so far, in 2-3 sentences."}'
+                        class="btn btn-ghost">
+                    Restate
+                </button>
+                <button type="button"
+                        hx-post="/adventures/{{.Adventure.ID}}/done"
+                        hx-target="#adventure-workspace"
+                        hx-swap="outerHTML"
+                        hx-indicator="#htmx-indicator"
+                        class="btn btn-done">
+                    Done &rarr;
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

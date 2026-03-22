@@ -1,0 +1,42 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/htmx.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand"><a href="/">MOSHAG</a></div>
+        <div class="nav-tagline">Mothership Adventure Generator</div>
+        <div class="nav-auth">
+            {{if .User}}
+                <div class="nav-user">
+                    {{if .User.AvatarURL}}<img class="nav-avatar" src="{{.User.AvatarURL}}" alt="">{{end}}
+                    <span class="nav-username">{{.User.Name}}</span>
+                    <form method="POST" action="/auth/logout" style="display:inline;">
+                        <button type="submit" class="btn btn-ghost">Logout</button>
+                    </form>
+                </div>
+            {{end}}
+        </div>
+    </nav>
+    <main class="container">
+        {{template "content" .}}
+    </main>
+    <div id="htmx-indicator" class="htmx-indicator">
+        <span class="loading-spinner"></span> Processing...
+    </div>
+</body>
+</html>
+{{end}}
+
+{{define "content"}}
+{{if eq .ActivePage "home"}}{{template "home-content" .}}
+{{else if eq .ActivePage "login"}}{{template "login-content" .}}
+{{else if eq .ActivePage "adventure"}}{{template "adventure-content" .}}
+{{end}}
+{{end}}

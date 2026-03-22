@@ -1,0 +1,10 @@
+{{define "chat-messages"}}
+<div id="chat-messages" class="chat-messages">
+    {{range .Messages}}
+    <div class="message message-{{.Role}}">
+        <div class="message-role">{{if eq .Role "user"}}You{{else}}Warden's AI{{end}}</div>
+        <div class="message-content">{{safe .Content}}</div>
+    </div>
+    {{end}}
+</div>
+{{end}}

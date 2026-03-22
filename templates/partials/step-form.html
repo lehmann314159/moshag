@@ -1,0 +1,59 @@
+{{define "step-form"}}
+<div class="step-form-wrapper">
+    <div class="chat-header">
+        <span class="chat-title">Warden's Assistant — {{stepLabel .Adventure.CurrentStep}}</span>
+        <span class="chat-step-label">Gather phase</span>
+    </div>
+    {{if .State.StepSummaries}}
+    <div class="step-context">
+        <span class="step-context-label">Context from prior steps</span>
+        {{range $step, $summary := .State.StepSummaries}}
+        <div class="step-context-entry">
+            <span class="step-context-step">{{stepLabel $step}}</span>
+            <span class="step-context-summary">{{$summary}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+    <form class="step-form"
+          hx-post="/adventures/{{.Adventure.ID}}/start"
+          hx-target="#main-panel"
+          hx-swap="innerHTML"
+          hx-indicator="#htmx-indicator">
+
+        <div class="step-form-body">
+            <!-- Left: labeled selects -->
+            <div class="step-form-selects">
+                <label class="step-label">
+                    {{stepLabel .Adventure.CurrentStep}}
+                    <select name="selection" class="step-select">
+                        <option value="">— choose an option —</option>
+                        {{range .StepOptions}}
+                        <option value="{{.Value}}" {{if eq .Value $.State.Scenario}}selected{{end}}{{if eq .Value $.State.Setting}}selected{{end}}>{{.Label}}</option>
+                        {{end}}
+                    </select>
+                </label>
+                <label class="step-label">
+                    Response style
+                    <select name="guidance" class="guidance-select">
+                        <option value="">— free response —</option>
+                        <option value="clarify">Dialogue</option>
+                        <option value="choices">Three Choices</option>
+                        <option value="idea">Flesh It Out</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- Right: context textarea -->
+            <label class="step-label step-label-grow">
+                Additional context
+                <textarea name="message" class="step-textarea" rows="4" placeholder="Optional notes or constraints..."></textarea>
+            </label>
+        </div>
+
+        <div class="step-form-actions">
+            <button type="submit" class="btn btn-primary">Begin Conversation &rarr;</button>
+        </div>
+    </form>
+</div>
+{{end}}

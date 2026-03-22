@@ -1,0 +1,34 @@
+{{define "adventure-list"}}
+<div id="adventure-list" class="adventure-list">
+    {{if .Adventures}}
+    <div class="adventures-grid">
+        {{range .Adventures}}
+        <div class="adventure-card">
+            <div class="adventure-card-header">
+                <a href="/adventures/{{.ID}}" class="adventure-title">{{.Title}}</a>
+                <span class="adventure-mode mode-{{.Mode}}">{{.Mode}}</span>
+            </div>
+            <div class="adventure-card-meta">
+                <span class="adventure-step">Step: {{.CurrentStep}}</span>
+                <span class="adventure-date">{{.UpdatedAt.Format "Jan 2, 2006"}}</span>
+            </div>
+            <div class="adventure-card-actions">
+                <a href="/adventures/{{.ID}}" class="btn btn-ghost btn-sm">Continue</a>
+                <button class="btn btn-danger btn-sm"
+                        hx-delete="/adventures/{{.ID}}"
+                        hx-target="#adventure-list"
+                        hx-swap="outerHTML"
+                        hx-confirm="Delete '{{.Title}}'? This cannot be undone.">
+                    Delete
+                </button>
+            </div>
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="empty-state">
+        <p>No adventures yet. Create your first one!</p>
+    </div>
+    {{end}}
+</div>
+{{end}}

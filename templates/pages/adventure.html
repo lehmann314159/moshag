@@ -1,0 +1,61 @@
+{{define "adventure-content"}}
+{{template "adventure-workspace" .}}
+<script>
+function chatBeforeRequest(form) {
+    var msgs = document.getElementById('chat-messages');
+    if (!msgs) return;
+
+    // Show user message immediately if there's text
+    var input = form.querySelector('[name=message]');
+    var text = input ? input.value.trim() : '';
+    if (text) {
+        var userDiv = document.createElement('div');
+        userDiv.className = 'message message-user';
+        userDiv.innerHTML = '<div class="message-role">You</div><div class="message-content">' +
+            text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+        msgs.appendChild(userDiv);
+    }
+
+    // Show thinking indicator
+    var thinking = document.createElement('div');
+    thinking.className = 'message message-assistant';
+    thinking.id = 'thinking-indicator';
+    thinking.innerHTML = '<div class="message-role">Warden\'s AI</div>' +
+        '<div class="message-content thinking-dots"><span></span><span></span><span></span></div>';
+    msgs.appendChild(thinking);
+    msgs.scrollTop = msgs.scrollHeight;
+}
+</script>
+{{end}}
+
+{{define "adventure-workspace"}}
+<div class="adventure-workspace" id="adventure-workspace">
+    <!-- Left sidebar: step navigator -->
+    <aside class="step-navigator">
+        <div class="nav-adventure-title">{{.Adventure.Title}}</div>
+        <div class="nav-mode">Mode: <span class="mode-badge">{{.Adventure.Mode}}</span></div>
+        <ul class="step-list">
+            {{$current := .Adventure.CurrentStep}}
+            {{$steps := .StepOrder}}
+            {{range $i, $step := $steps}}
+            {{if ne $step "complete"}}
+            <li class="step-item {{if eq $step $current}}active{{end}} {{if stepIsComplete $steps $current $step}}complete{{end}}">
+                <span class="step-num">{{add $i 1}}</span>
+                <span class="step-name">{{stepLabel $step}}</span>
+                {{if stepIsComplete $steps $current $step}}<span class="step-check">&#10003;</span>{{end}}
+            </li>
+            {{end}}
+            {{end}}
+        </ul>
+    </aside>
+
+    <!-- Right: gather or collaborate phase -->
+    <div class="main-panel" id="main-panel">
+        {{if .Messages}}
+            {{template "collaborate-panel" (dict "Adventure" .Adventure "State" .State "Messages" .Messages)}}
+        {{else}}
+            {{template "step-form" (dict "Adventure" .Adventure "State" .State "StepOptions" .StepOptions)}}
+        {{end}}
+    </div>
+</div>
+{{end}}

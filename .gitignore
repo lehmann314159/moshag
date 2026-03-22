@@ -1,0 +1,26 @@
+# Go
+moshag
+moshag_bin
+*.exe
+*.test
+*.out
+
+# Data
+data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+
+# Copyrighted assets
+*.pdf

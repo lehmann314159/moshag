@@ -1,0 +1,31 @@
+services:
+  moshag:
+    image: lehmann314159/moshag:latest
+    build: .
+    container_name: moshag
+    environment:
+      - PORT=3000
+      - OLLAMA_URL=http://host-gateway:11434
+      - OLLAMA_MODEL=qwen2.5:32b-instruct-q4_K_M
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - SESSION_ENCRYPT_KEY=${SESSION_ENCRYPT_KEY}
+      - BASE_URL=${BASE_URL:-https://moshag.verynormalserver.com}
+      - DB_PATH=/app/data/moshag.db
+      - SECURE_COOKIES=${SECURE_COOKIES:-true}
+    volumes:
+      - moshag-data:/app/data
+    extra_hosts:
+      - "host-gateway:host-gateway"
+    ports:
+      - "3002:3000"
+    restart: unless-stopped
+    networks: [internal]
+
+volumes:
+  moshag-data:
+
+networks:
+  internal:
+    driver: bridge
